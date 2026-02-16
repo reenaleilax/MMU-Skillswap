@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>Edit Profile for {{ user.email }}</h1>
+
+    <form method="POST">
+      <label>Faculty</label>
+      <input type="text" name="faculty" value="{{ user.faculty or '' }}">
+
+      <br><br>
+
+      <label>Bio</label><br>
+      <textarea name="bio">{{ user.bio or '' }}</textarea>
+
+      <br><br>
+
+      <label>Skills (comma separated)</label>
+      <input type="text" name="skills"
+        value="{% if user.skills %}{{ user.skills | map(attribute='name') | join(', ') }}{% endif %}">
+
+
+      <br><br>
+
+      <button type="submit">Save</button>
+    </form>
+  </body>
+</html>
