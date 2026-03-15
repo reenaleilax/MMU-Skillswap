@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillSwap - Main Feed & Search</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F9FAFB; color: #111827; }
+        .navbar { background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .hero-section { background: linear-gradient(135deg, #4F46E5 0%, #22D3EE 100%); color: white; padding: 60px 0; }
+        .skill-card { transition: transform 0.2s, box-shadow 0.2s; border: none; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: 100%; }
+        .skill-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(79, 70, 229, 0.15); }
+        .category-badge { background-color: #F3F4F6; color: #4F46E5; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 500; }
+        .btn-primary { background-color: #4F46E5; border-color: #4F46E5; padding: 10px 24px; font-weight: 500; }
+        .btn-primary:hover { background-color: #4338CA; border-color: #4338CA; }
+        .btn-outline-primary { color: #4F46E5; border-color: #4F46E5; }
+        .avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #4F46E5 0%, #22D3EE 100%); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1.2rem; }
+        .search-section { background-color: white; padding: 30px 0; border-bottom: 1px solid #E5E7EB; }
+        .search-container { max-width: 600px; margin: 0 auto; }
+        .feed-tabs { border-bottom: 2px solid #E5E7EB; margin-bottom: 24px; }
+        .feed-tab { padding: 12px 24px; font-weight: 500; color: #6B7280; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+        .feed-tab.active { color: #4F46E5; border-bottom-color: #4F46E5; }
+        .stats-badge { background-color: #EEF2FF; color: #4F46E5; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 500; }
+        .no-results { text-align: center; padding: 60px 20px; background-color: white; border-radius: 12px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="#" style="color: #4F46E5;">
+            <i class="bi bi-arrow-left-right me-2"></i>SkillSwap
+        </a>
+        <form class="d-flex mx-auto order-lg-1 order-2" role="search" style="max-width: 400px; width: 100%;" id="globalSearchForm">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                <input class="form-control border-start-0" type="search" placeholder="Search skills, people, or topics..." id="globalSearchInput">
+            </div>
+        </form>
+        <button class="navbar-toggler order-1" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse order-lg-2 order-3" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+    <li class="nav-item"><a class="nav-link active" href="/dashboard">Feed</a></li>
+    <li class="nav-item ms-lg-2">
+        <a class="btn btn-primary btn-sm" href="/skill/add">
+            <i class="bi bi-plus-circle me-1"></i>Post a Skill
+        </a>
+    </li>
+</ul>
+
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold mb-3">Discover Your Next Skill Swap</h1>
+        <p class="lead mb-4">Connect with students who want to learn what you know, and teach what you want to learn</p>
+        <div class="d-flex justify-content-center gap-3">
+            <span class="stats-badge bg-white"><i class="bi bi-people-fill me-2"></i>{{ users|length }} active swappers</span>
+        </div>
+    </div>
+</section>
+
+<!-- Search & Filter Section -->
+<section class="search-section">
+    <div class="container">
+        <div class="search-container">
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <select class="form-select" id="categoryFilter">
+                        <option value="all">All Faculties</option>
+                        {% set faculties = users | map(attribute='faculty') | select | unique | list %}
+                        {% for faculty in faculties %}
+                            <option value="{{ faculty | lower }}">{{ faculty }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select" id="sortFilter">
+                        <option value="recent">Most Recent</option>
+                        <option value="popular">Most Popular</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-outline-primary w-100" id="clearFilters">
+                        <i class="bi bi-x-circle me-2"></i>Clear Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Main Feed -->
+<section class="py-4">
+    <div class="container">
+        <div class="feed-tabs d-flex">
+            <div class="feed-tab active" data-tab="all">All Swaps</div>
+            <div class="feed-tab" data-tab="trending">Trending 🔥</div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <span class="text-secondary" id="resultsCount">Showing {{ users|length }} results</span>
+            <div id="activeFilters" class="d-flex gap-2"></div>
+        </div>
+
+        <!-- Skills Grid - populated from database -->
+        <div class="row g-4" id="skillsFeed">
+
+            {% for user in users %}
+            {% set initials = user.email[:2].upper() %}
+            {% set skill_names = user.skills | map(attribute='name') | join(' ') | lower %}
+            <div class="col-lg-4 col-md-6 skill-item"
+                 data-category="{{ user.faculty | lower if user.faculty else 'other' }}"
+                 data-name="{{ user.email | lower }}"
+                 data-skills="{{ skill_names }}">
+                <div class="card skill-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="category-badge">
+                                <i class="bi bi-mortarboard me-1"></i>{{ user.faculty or 'No Faculty' }}
+                            </span>
+                            <span class="badge bg-success">Available</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="avatar me-3">{{ initials }}</div>
+                            <div>
+    <h5 class="fw-bold mb-0">{{ user.name or user.email.split('@')[0] }}</h5>
+    <small class="text-secondary">{{ user.faculty or 'MMU Student' }}</small>
+</div>
+
+                        </div>
+                        <p class="text-secondary small mb-3">{{ user.bio or 'No bio yet.' }}</p>
+                        <div class="mb-3">
+                            {% if user.skills %}
+                                {% for skill in user.skills %}
+                                    <span class="badge bg-primary bg-opacity-10 text-primary me-1 mb-1 p-2">
+                                        {{ skill.name }}
+                                    </span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="text-secondary small">No skills listed yet.</span>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="/profile/{{ user.id }}/edit" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-pencil me-1"></i>Edit Profile
+                            </a>
+                            <button class="btn btn-primary btn-sm">Swap Request</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <div class="no-results">
+                    <i class="bi bi-people fs-1 text-secondary mb-3"></i>
+                    <h4>No users yet</h4>
+                    <p class="text-secondary">Run seed.py to add test users</p>
+                </div>
+            </div>
+            {% endfor %}
+
+        </div>
+    </div>
+</section>
+
+<!-- Search/Filter JS -->
+<script>
+$(document).ready(function() {
+    $("#globalSearchInput, #categoryFilter").on("keyup change", function() {
+        filterSkills();
+    });
+
+    $("#clearFilters").click(function() {
+        $("#globalSearchInput").val("");
+        $("#categoryFilter").val("all");
+        filterSkills();
+    });
+
+    function filterSkills() {
+        var searchValue = $("#globalSearchInput").val().toLowerCase();
+        var categoryValue = $("#categoryFilter").val();
+        var visibleCount = 0;
+
+        $(".skill-item").each(function() {
+            var card = $(this);
+            var cardText = card.text().toLowerCase();
+            var cardCategory = card.data("category");
+            var cardSkills = card.data("skills") ? card.data("skills").toLowerCase() : "";
+
+            var matchesSearch = searchValue === "" ||
+                                cardText.indexOf(searchValue) > -1 ||
+                                cardSkills.indexOf(searchValue) > -1;
+
+            var matchesCategory = categoryValue === "all" ||
+                                  cardCategory.indexOf(categoryValue) > -1;
+
+            if (matchesSearch && matchesCategory) {
+                card.show();
+                visibleCount++;
+            } else {
+                card.hide();
+            }
+        });
+
+        $("#resultsCount").text("Showing " + visibleCount + " results");
+
+        if (visibleCount === 0) {
+            if ($("#noResultsMsg").length === 0) {
+                $("#skillsFeed").append(`
+                    <div class="col-12" id="noResultsMsg">
+                        <div class="no-results">
+                            <i class="bi bi-search fs-1 text-secondary mb-3"></i>
+                            <h4>No skills found</h4>
+                            <p class="text-secondary">Try adjusting your search or filters</p>
+                            <button class="btn btn-primary mt-3" id="resetFromNoResults">
+                                <i class="bi bi-arrow-counterclockwise me-2"></i>Reset Filters
+                            </button>
+                        </div>
+                    </div>
+                `);
+                $("#resetFromNoResults").click(function() {
+                    $("#globalSearchInput").val("");
+                    $("#categoryFilter").val("all");
+                    filterSkills();
+                    $(this).closest("#noResultsMsg").remove();
+                });
+            }
+        } else {
+            $("#noResultsMsg").remove();
+        }
+    }
+
+    filterSkills();
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
